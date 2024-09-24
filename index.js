@@ -61,5 +61,5 @@ async function enviarSolicitudMetaAI(pregunta) {
 
 // Escuchar en el puerto especificado
 app.listen(port, () => {
-  console.log(`API Local En Línea en http://localhost:${port}`);
+  console.log(`API Local En Línea http://localhost:${port}`);
 });
