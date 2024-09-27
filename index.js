@@ -17,9 +17,13 @@ app.use(express.json());
 app.post('/', async (req, res) => {
   const { pregunta } = req.body; // Usar el cuerpo de la solicitud para obtener la pregunta
 
+  console.log("Pregunta recibida:", pregunta); // Verifica que se esté recibiendo correctamente la pregunta
+
   try {
     // Llamada a la función que interactúa con la API de GroqCloud
     const respuesta = await getGroqChatCompletion(pregunta || "Default question for Groq");
+
+    console.log("Respuesta de GroqCloud:", respuesta); // Muestra la respuesta de GroqCloud
 
     // Respuesta enviada al cliente
     res.send(respuesta);
@@ -42,6 +46,9 @@ async function getGroqChatCompletion(pregunta) {
       ],
       model: "llama3-8b-8192", // Modelo de GroqCloud
     });
+
+    // Verificar la respuesta obtenida de GroqCloud
+    console.log("Respuesta obtenida de GroqCloud:", chatCompletion);
 
     // Retorna el contenido de la respuesta
     return chatCompletion.choices[0]?.message?.content || "No content from Groq";
