@@ -7,55 +7,47 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Inicializa la instancia de GroqCloud con la API Key desde .env
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// Endpoint principal para Groq y para Apimocha
-app.get('/', async (req, res) => {
-  const { pregunta, servicio } = req.query; // Usar parámetros de la URL (pregunta y servicio)
+// Middleware para permitir solicitudes POST con JSON
+app.use(express.json());
+
+// Endpoint principal para interactuar con la API de GroqCloud
+app.post('/', async (req, res) => {
+  const { pregunta } = req.body; // Usar el cuerpo de la solicitud para obtener la pregunta
 
   try {
-    let respuesta;
-    if (servicio === 'groq') {
-      // Si se especifica 'groq', usar la API de Groq
-      respuesta = await getGroqChatCompletion(pregunta || "Default question for Groq");
-    } else if (servicio === 'apimocha') {
-      // Si se especifica 'apimocha', usar la URL externa
-      respuesta = await enviarSolicitudMetaAI(pregunta || "Default question for Apimocha");
-    } else {
-      // Si no se especifica un servicio válido, enviar un mensaje de error
-      respuesta = "Servicio no especificado o inválido. Usa 'groq' o 'apimocha' como servicio.";
-    }
+    // Llamada a la función que interactúa con la API de GroqCloud
+    const respuesta = await getGroqChatCompletion(pregunta || "Default question for Groq");
 
+    // Respuesta enviada al cliente
     res.send(respuesta);
   } catch (error) {
+    console.error('Error al procesar la solicitud:', error.message);
     res.status(500).send("Error al procesar la solicitud.");
   }
 });
 
-// Función para interactuar con Groq API
+// Función para interactuar con la API de GroqCloud
 async function getGroqChatCompletion(pregunta) {
-  const chatCompletion = await groq.chat.completions.create({
-    messages: [
-      {
-        role: "user",
-        content: pregunta,
-      },
-    ],
-    model: "llama3-8b-8192",
-  });
-  return chatCompletion.choices[0]?.message?.content || "No content from Groq";
-}
-
-// Función para enviar la solicitud a la URL externa (https://apimocha.com/metaai/IA/meta=)
-async function enviarSolicitudMetaAI(pregunta) {
   try {
-    const response = await axios.post('https://apimocha.com/metaai/IA/meta=', {
-      question: pregunta
+    // Llamada a la API de GroqCloud usando la instancia inicializada con la API Key
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: pregunta,
+        },
+      ],
+      model: "llama3-8b-8192", // Modelo de GroqCloud
     });
-    return response.data; // Regresa el contenido de la respuesta
+
+    // Retorna el contenido de la respuesta
+    return chatCompletion.choices[0]?.message?.content || "No content from Groq";
   } catch (error) {
-    console.error('Error al enviar la solicitud:', error.message);
-    throw new Error('Solicitud fallida a Apimocha');
+    console.error('Error al obtener la respuesta de GroqCloud:', error.message);
+    throw new Error('Error en la interacción con la API de GroqCloud');
   }
 }
 
